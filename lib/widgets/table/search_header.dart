@@ -29,13 +29,6 @@ class _SearchHeaderState extends State<SearchHeader> {
     super.initState();
     _searchFocusNode = FocusNode();
     _searchController = TextEditingController();
-    
-    // Automatically focus the search field on mobile to show keyboard
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (MediaQuery.of(context).size.width < 800) { // Mobile check
-        _searchFocusNode.requestFocus();
-      }
-    });
   }
 
   @override

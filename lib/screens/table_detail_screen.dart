@@ -261,6 +261,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF6F6F6), // Uber light grey
+        resizeToAvoidBottomInset: false, // Prevent keyboard from resizing the view
         appBar: AppBar(
           title: SearchHeader(
             tableName: table.name,

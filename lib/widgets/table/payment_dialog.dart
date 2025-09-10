@@ -165,28 +165,75 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                 ),
               ],
             ],
+            const SizedBox(height: 20),
+            Text(
+              'Perfundo pagesen',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text(
+                      'Paguaj          ',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    selected: false,
+                    onSelected: _canProcessPayment(total) ? (_) => _processKitchenPayment(total) : null,
+                    selectedColor: const Color(0xFF000000),
+                    backgroundColor: Colors.grey[300],
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text(
+                      'Kupon Fiskal         ',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    selected: false,
+                    onSelected: _canProcessPayment(total) ? (_) => _processPayment(total) : null,
+                    selectedColor: const Color(0xFF006400),
+                    backgroundColor: Colors.green[300],
+                    labelStyle: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[600],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 2,
+                ),
+                child: const Text('Anulo'),
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(
-            AppTranslations.cancel,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600), // Increased font size
-          ),
-        ),
-        ElevatedButton(
-          onPressed: _canProcessPayment(total) ? () => _processPayment(total) : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF000000),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 32), // Increased padding
-            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600), // Increased font size
-          ),
-          child: Text(AppTranslations.completePayment),
-        ),
-      ],
+      actions: [],
     );
   }
 
@@ -214,7 +261,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Payment completed! Change: \$${(cashReceived - total).toStringAsFixed(2)}'),
-            backgroundColor: const Color(0xFF000000),
+            backgroundColor: const Color(0xFF006400), // Dark green to match button
             duration: const Duration(seconds: 2),
           ),
         );
@@ -225,6 +272,41 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Payment failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  void _processKitchenPayment(double total) async {
+    if (selectedPaymentMethodId == null) return;
+    try {
+      final api = ApiService();
+      await api.processKitchenSale(widget.tableId, selectedPaymentMethodId!);
+      // Close all orders
+      for (final order in widget.orders) {
+        ref.read(ordersProvider.notifier).closeOrder(order.id);
+      }
+      // Free the table - single API call with null waiterId
+      ref.read(hallsProvider.notifier).assignWaiter(widget.tableId, null);
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kitchen payment completed! Change: \$${(cashReceived - total).toStringAsFixed(2)}'),
+            backgroundColor: const Color(0xFF000000), // Black to match button
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      widget.onPaymentComplete();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kitchen payment failed: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

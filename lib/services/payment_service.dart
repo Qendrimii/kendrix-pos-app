@@ -89,8 +89,31 @@ class PaymentService extends BaseApiService {
         'amount': 0.0, // Will be calculated by server
         'receivedAmount': 0.0,
         'adminPassword': '', // May need to be provided
-        'printFiscal': false,
+        'printFiscal': true,
         'printKitchen': false,
+      }),
+    );
+    
+    return BaseApiService.handleResponse(response);
+  }
+
+  static Future<Map<String, dynamic>> processKitchenSale(String tableId, int paymentMethodId, {int? customerId}) async {
+    if (!BaseApiService.isConfigured) {
+      throw ApiException(statusCode: 0, message: 'API not configured');
+    }
+    
+    // Use the actual Payments API endpoint with kitchen printing settings
+    final response = await http.post(
+      Uri.parse('${BaseApiService.baseUrl}/api/Payments/process'),
+      headers: BaseApiService.headers,
+      body: json.encode({
+        'tableId': tableId,
+        'paymentMethodId': paymentMethodId,
+        'amount': 0.0, // Will be calculated by server
+        'receivedAmount': 0.0,
+        'adminPassword': '', // May need to be provided
+        'printFiscal': false,
+        'printKitchen': true,
       }),
     );
     

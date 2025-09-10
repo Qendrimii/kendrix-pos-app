@@ -179,6 +179,10 @@ class ApiService {
     return await PaymentService.processCustomerSale(tableId, paymentMethodId, customerId: customerId);
   }
 
+  Future<Map<String, dynamic>> processKitchenSale(String tableId, int paymentMethodId, {int? customerId}) async {
+    return await PaymentService.processKitchenSale(tableId, paymentMethodId, customerId: customerId);
+  }
+
   Future<Map<String, dynamic>> printCustomerReceipt(String transactionId) async {
     return await PaymentService.printCustomerReceipt(transactionId);
   }

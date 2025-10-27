@@ -22,6 +22,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   String _searchQuery = '';
   List<MenuItem> _searchResults = [];
   bool _isSearching = false;
+  List<String> _apiCategories = [];
 
   @override
   void initState() {
@@ -29,7 +30,27 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     // Load orders when entering the table
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadTableOrders();
+      _loadCategories();
     });
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final apiService = ApiService();
+      if (apiService.isConfigured) {
+        final categories = await apiService.getCategories();
+        setState(() {
+          _apiCategories = ['All', ...categories];
+        });
+        print('Loaded ${categories.length} categories from API: $categories');
+      }
+    } catch (e) {
+      print('Failed to load categories from API: $e');
+      // Fallback to extracting from menu items
+      setState(() {
+        _apiCategories = ['All'];
+      });
+    }
   }
 
   @override
@@ -229,7 +250,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     }
 
     // Filter menu items
-    final categories = ['All', ...menu.map((item) => item.category).toSet().toList()];
+    final categories = _apiCategories.isNotEmpty ? _apiCategories : ['All', ...menu.map((item) => item.category).toSet().toList()];
     final filteredMenu = selectedCategory == 'Search' 
         ? _searchResults 
         : selectedCategory == 'All'

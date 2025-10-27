@@ -56,9 +56,9 @@ class MenuService extends BaseApiService {
     final data = BaseApiService.handleResponse(response);
     // Handle different response formats
     if (data is List) {
-      return (data as List).map((item) => item.toString()).toList();
+      return (data as List).map((item) => item['name']?.toString() ?? 'Unknown').toList();
     } else if (data is Map && data.containsKey('data') && data['data'] is List) {
-      return (data['data'] as List).map((item) => item.toString()).toList();
+      return (data['data'] as List).map((item) => item['name']?.toString() ?? 'Unknown').toList();
     } else {
       // Return empty list if no categories
       return [];

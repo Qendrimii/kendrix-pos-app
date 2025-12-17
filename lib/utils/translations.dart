@@ -35,6 +35,7 @@ class AppTranslations {
   // Port Discovery
   static const String portDiscovery = 'Zbulimi i Portave';
   static const String portDiscoveryDescription = 'Zbuloni portat e disponueshme në një host specifik.';
+  static const String portDiscoverySubDescription = 'Zbuloni portat e disponueshme në një host specifik.';
   static const String hostAddress = 'Adresa e Host-it';
   static const String hostAddressHint = 'localhost ose 192.168.1.100';
   static const String discoverPorts = 'Zbulo Portat';
@@ -52,6 +53,9 @@ class AppTranslations {
   static const String healthEndpointAvailable = 'Pika fundore e shëndetësisë e disponueshme';
   static const String serverResponding = 'Serveri po përgjigjet';
   static const String use = 'Përdor';
+
+  // Cache Management Descriptions
+  static const String cacheManagementSubDescription = 'Menaxhoni të dhënat e cache-uara lokalisht.';
   
   // Cache Management
   static const String cacheManagement = 'Menaxhimi i Cache';
@@ -114,6 +118,9 @@ class AppTranslations {
   static const String completePayment = 'Përfundo Pagesën';
   static const String paymentCompleted = 'Pagesa u përfundua!';
   static const String paymentFailed = 'Pagesa dështoi';
+  static const String paymentCompletedWithChange = 'Pagesa u përfundua! Kusuri:';
+  static const String kitchenPaymentCompleted = 'Pagesa e kuzhinës u përfundua! Kusuri:';
+  static const String kitchenPaymentFailed = 'Pagesa e kuzhinës dështoi';
   
   // Mobile Bottom Bar
   static const String paymentButton = 'Pagesa';
@@ -130,6 +137,21 @@ class AppTranslations {
   static const String error = 'Gabim';
   static const String errorType = 'Lloji i Gabimit';
   static const String thisUsuallyIndicates = 'Kjo zakonisht tregon:';
+
+  // Order Error Messages (Albanian)
+  static const String failedToCreateOrder = 'Dështoi krijimi i porosisë';
+  static const String failedToAddItem = 'Dështoi shtimi i artikullit';
+  static const String failedToRemoveItem = 'Dështoi heqja e artikullit';
+  static const String failedToUpdateQuantity = 'Dështoi përditësimi i sasisë';
+  static const String failedToSendOrder = 'Dështoi dërgimi i porosisë në kuzhinë';
+  static const String orderFailed = 'Porosia Dështoi';
+  static const String pleaseCheckConnection = 'Ju lutemi kontrolloni lidhjen tuaj të internetit dhe provoni përsëri.';
+  static const String apiNotConfigured = 'API nuk është konfiguruar. Ju lutemi kontrolloni cilësimet e lidhjes.';
+  static const String sendingOrderToKitchen = 'Duke dërguar porosinë në kuzhinë...';
+  static const String addedItemsPartialFail = 'U shtuan {0} artikuj, por {1} dështuan';
+  static const String failedToAddItems = 'Dështoi shtimi i artikujve. Ju lutemi kontrolloni lidhjen.';
+  static const String orderPrintedButNotSaved = 'Porosia u printua por mund të mos jetë ruajtur: {0}. Ju lutemi verifikoni.';
+  static const String verifyOrderSaved = 'Ju lutemi verifikoni që porosia u ruajt';
   
   // Success Messages
   static const String success = 'Sukses';
@@ -191,6 +213,13 @@ class AppTranslations {
   static const String connectionError = 'Gabim i lidhjes';
   static const String timeoutError = 'Gabim i kohës së pritjes';
   static const String serverError = 'Gabim i serverit';
+  static const String pleaseCheckNetworkConnection = 'Ju lutemi kontrolloni lidhjen tuaj të internetit dhe provoni përsëri.';
+
+  // Data Refresh Messages
+  static const String dataRefreshedFromApi = 'Të dhënat u rifreskuan nga API';
+  static const String apiNotConfiguredGoToSettings = 'API nuk është konfiguruar. Shkoni te Cilësimet për ta konfiguruar.';
+  static const String failedToRefreshData = 'Dështoi rifreskimi i të dhënave';
+  static const String refreshDataFromApi = 'Rifresko të dhënat nga API';
   
   // Data
   static const String noData = 'Nuk ka të dhëna';

@@ -121,11 +121,11 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                   Expanded(
                     child: TextField(
                       controller: _cashController,
-                      decoration: const InputDecoration(
-                        labelText: 'Cash received',
+                      decoration: InputDecoration(
+                        labelText: AppTranslations.cashReceived,
                         prefixText: '\$',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // Increased padding
                       ),
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
@@ -149,7 +149,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20), // Increased padding
                       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600), // Increased font size
                     ),
-                    child: const Text('Full Payment'),
+                    child: Text(AppTranslations.fullPayment),
                   ),
                 ],
               ),
@@ -167,8 +167,8 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
             ],
             const SizedBox(height: 20),
             Text(
-              'Perfundo pagesen',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              AppTranslations.completePayment,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Row(
@@ -227,7 +227,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                   ),
                   elevation: 2,
                 ),
-                child: const Text('Anulo'),
+                child: Text(AppTranslations.cancel),
               ),
             ),
           ],
@@ -260,7 +260,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Payment completed! Change: \$${(cashReceived - total).toStringAsFixed(2)}'),
+            content: Text('${AppTranslations.paymentCompletedWithChange} \$${(cashReceived - total).toStringAsFixed(2)}'),
             backgroundColor: const Color(0xFF006400), // Dark green to match button
             duration: const Duration(seconds: 2),
           ),
@@ -271,7 +271,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Payment failed: ${e.toString()}'),
+            content: Text('${AppTranslations.paymentFailed}: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -295,7 +295,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kitchen payment completed! Change: \$${(cashReceived - total).toStringAsFixed(2)}'),
+            content: Text('${AppTranslations.kitchenPaymentCompleted} \$${(cashReceived - total).toStringAsFixed(2)}'),
             backgroundColor: const Color(0xFF000000), // Black to match button
             duration: const Duration(seconds: 2),
           ),
@@ -306,7 +306,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Kitchen payment failed: ${e.toString()}'),
+            content: Text('${AppTranslations.kitchenPaymentFailed}: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

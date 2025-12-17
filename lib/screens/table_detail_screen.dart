@@ -513,21 +513,56 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  void _addItemToOrder(MenuItem item) {
+  Future<void> _addItemToOrder(MenuItem item) async {
     // Create order if none exists
-    final activeOrder = ref.read(ordersProvider).where((order) => 
+    final activeOrder = ref.read(ordersProvider).where((order) =>
       order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
     ).firstOrNull;
-    
+
     if (activeOrder == null) {
-      ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+      final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+      if (!createResult.success) {
+        _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
+        return;
+      }
     }
-    
+
     final comment = itemComments[item.id];
-    ref.read(ordersProvider.notifier).addItemToOrder(
+    final result = await ref.read(ordersProvider.notifier).addItemToOrder(
       widget.tableId,
       item,
       comment: comment,
+    );
+
+    if (!result.success) {
+      _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToAddItem);
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'OK',
+          textColor: Colors.white,
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 1),
+      ),
     );
   }
 
@@ -621,37 +656,64 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     );
   }
 
-  void _addItemToOrderWithDetails(MenuItem item, int quantity, String comment) {
+  Future<void> _addItemToOrderWithDetails(MenuItem item, int quantity, String comment) async {
     // Create order if none exists
-    final activeOrder = ref.read(ordersProvider).where((order) => 
+    final activeOrder = ref.read(ordersProvider).where((order) =>
       order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
     ).firstOrNull;
-    
+
     if (activeOrder == null) {
-      ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+      final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+      if (!createResult.success) {
+        _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
+        return;
+      }
     }
-    
-    // Add multiple items with comment
+
+    // Add items with comment - track failures
+    int successCount = 0;
+    int failCount = 0;
+
     for (int i = 0; i < quantity; i++) {
-      ref.read(ordersProvider.notifier).addItemToOrder(
+      final result = await ref.read(ordersProvider.notifier).addItemToOrder(
         widget.tableId,
         item,
         comment: comment.isNotEmpty ? comment : null,
       );
+
+      if (result.success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+    }
+
+    if (failCount > 0) {
+      if (successCount > 0) {
+        _showErrorSnackBar('${AppTranslations.addedItemsPartialFail.replaceFirst('{0}', successCount.toString()).replaceFirst('{1}', failCount.toString())}');
+      } else {
+        _showErrorSnackBar(AppTranslations.failedToAddItems);
+      }
     }
   }
 
-  void _removeItem(int index) {
-    ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, index);
+  Future<void> _removeItem(int index) async {
+    final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, index);
+    if (!result.success) {
+      _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+    }
   }
 
-  void _removeItemFromOrder(String orderId, OrderItem item) {
+  Future<void> _removeItemFromOrder(String orderId, OrderItem item) async {
     // Find the order and the item index
     final orders = ref.read(ordersProvider);
     final order = orders.firstWhere((o) => o.id == orderId);
     final itemIndex = order.items.indexOf(item);
     if (itemIndex != -1) {
-      ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, itemIndex);
+      final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, itemIndex);
+      if (!result.success) {
+        _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+      }
     }
   }
 
@@ -663,39 +725,112 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     ref.read(ordersProvider.notifier).updateOrderItemQuantity(widget.tableId, index, quantity);
   }
 
-  void _printOrder(Order order) {
-    print('🎯 _printOrder called in UI for order: ${order.id} with ${order.items.length} items');
-    print('📊 Order details: ${order.items.map((item) => '${item.name} x${item.quantity}').join(', ')}');
-    
-    ref.read(ordersProvider.notifier).printOrder(order.id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppTranslations.orderSentToKitchen),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 1),
-      ),
-    );
-    
-    // Navigate back to halls after a short delay
-    Future.delayed(const Duration(seconds: 1), () async {
-      if (context.mounted) {
-        // Check and free table if needed
-        if (mounted) {
-          await _checkAndFreeTable();
-        }
-        
-        // Refresh halls data before navigating back
-        print('🔄 Refreshing halls data before navigation...');
-        if (mounted) {
-          await ref.read(hallsProvider.notifier).loadFromApi();
-          print('✅ Halls data refreshed');
-          
-          if (context.mounted) {
-            context.go('/halls');
+  Future<void> _printOrder(Order order) async {
+    print('_printOrder called in UI for order: ${order.id} with ${order.items.length} items');
+    print('Order details: ${order.items.map((item) => '${item.name} x${item.quantity}').join(', ')}');
+
+    // Show loading indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(AppTranslations.sendingOrderToKitchen),
+            ],
+          ),
+          backgroundColor: Colors.blue,
+          duration: const Duration(seconds: 10), // Will be dismissed when result comes
+        ),
+      );
+    }
+
+    final result = await ref.read(ordersProvider.notifier).printOrder(order.id);
+
+    // Dismiss loading snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
+
+    if (result.success) {
+      _showSuccessSnackBar(AppTranslations.orderSentToKitchen);
+
+      // Navigate back to halls after a short delay
+      Future.delayed(const Duration(seconds: 1), () async {
+        if (context.mounted) {
+          // Check and free table if needed
+          if (mounted) {
+            await _checkAndFreeTable();
+          }
+
+          // Refresh halls data before navigating back
+          print('Refreshing halls data before navigation...');
+          if (mounted) {
+            await ref.read(hallsProvider.notifier).loadFromApi();
+            print('Halls data refreshed');
+
+            if (context.mounted) {
+              context.go('/halls');
+            }
           }
         }
-      }
-    });
+      });
+    } else {
+      // CRITICAL: Show error to user - order was NOT sent successfully
+      _showErrorDialog(
+        AppTranslations.orderFailed,
+        result.errorMessage ?? AppTranslations.failedToSendOrder,
+        result.isNetworkError,
+      );
+    }
+  }
+
+  void _showErrorDialog(String title, String message, bool isNetworkError) {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              isNetworkError ? Icons.wifi_off : Icons.error_outline,
+              color: Colors.red,
+            ),
+            const SizedBox(width: 8),
+            Text(title),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message),
+            if (isNetworkError) ...[
+              const SizedBox(height: 16),
+              Text(
+                AppTranslations.pleaseCheckNetworkConnection,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppTranslations.ok),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAllPreviousOrdersDialog(BuildContext context, List<Order> previousOrders) {

@@ -110,11 +110,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (discoveredServer != null) {
         setState(() {
           _serverController.text = discoveredServer.url;
-          _connectionStatus = '✅ Auto-discovered server: ${discoveredServer.url}';
+          _connectionStatus = '✅ ${AppTranslations.autoDiscoveredServer}: ${discoveredServer.url}';
         });
       } else {
         setState(() {
-          _connectionStatus = '❌ No API server found during auto-discovery';
+          _connectionStatus = '❌ ${AppTranslations.noServerFound}';
         });
       }
     } catch (e) {
@@ -460,18 +460,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Port Discovery',
-                        style: TextStyle(
+                      Text(
+                        AppTranslations.portDiscovery,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF000000),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Discover available ports on a specific host.',
-                        style: TextStyle(
+                      Text(
+                        AppTranslations.portDiscoverySubDescription,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF666666),
                         ),
@@ -479,8 +479,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(height: 16),
                       TextFormField(
                         decoration: InputDecoration(
-                          labelText: 'Host Address',
-                          hintText: 'localhost or 192.168.1.100',
+                          labelText: AppTranslations.hostAddress,
+                          hintText: AppTranslations.hostAddressHint,
                           prefixIcon: const Icon(Icons.computer),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -509,7 +509,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 )
                               : const Icon(Icons.search),
-                          label: Text(_isDiscoveringPorts ? 'Scanning...' : 'Discover Ports'),
+                          label: Text(_isDiscoveringPorts ? AppTranslations.scanning : AppTranslations.discoverPorts),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4CAF50),
                             foregroundColor: const Color(0xFFFFFFFF),
@@ -524,9 +524,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       // Discovered Ports List
                       if (_discoveredPorts.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        const Text(
-                          'Discovered Ports:',
-                          style: TextStyle(
+                        Text(
+                          AppTranslations.discoveredPorts,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF000000),
@@ -539,15 +539,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               port.hasHealthEndpoint ? Icons.check_circle : Icons.info,
                               color: port.hasHealthEndpoint ? Colors.green : Colors.orange,
                             ),
-                            title: Text('Port ${port.port}'),
-                            subtitle: Text(port.hasHealthEndpoint ? 'Health endpoint available' : 'Server responding'),
+                            title: Text('${AppTranslations.port} ${port.port}'),
+                            subtitle: Text(port.hasHealthEndpoint ? AppTranslations.healthEndpointAvailable : AppTranslations.serverResponding),
                             trailing: ElevatedButton(
                               onPressed: () {
                                 setState(() {
                                   _serverController.text = port.url;
                                 });
                               },
-                              child: const Text('Use'),
+                              child: Text(AppTranslations.use),
                             ),
                           ),
                         )).toList()),
@@ -575,29 +575,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Cache Management',
-                        style: TextStyle(
+                      Text(
+                        AppTranslations.cacheManagement,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF000000),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Manage locally cached data.',
-                        style: TextStyle(
+                      Text(
+                        AppTranslations.cacheManagementSubDescription,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF666666),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Cache Info
                       if (_cacheInfo.isNotEmpty) ...[
-                        const Text(
-                          'Cache Size:',
-                          style: TextStyle(
+                        Text(
+                          AppTranslations.cacheSize,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF000000),
@@ -614,7 +614,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 style: const TextStyle(color: Color(0xFF666666)),
                               ),
                               Text(
-                                '${entry.value} bytes',
+                                '${entry.value} ${AppTranslations.bytes}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w500,
                                   color: Color(0xFF000000),
@@ -625,13 +625,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         )).toList()),
                         const SizedBox(height: 16),
                       ],
-                      
+
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: _clearCache,
                           icon: const Icon(Icons.clear_all),
-                          label: const Text('Clear Cache'),
+                          label: Text(AppTranslations.clearCache),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF5722),
                             foregroundColor: const Color(0xFFFFFFFF),

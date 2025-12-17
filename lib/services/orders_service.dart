@@ -298,71 +298,111 @@ class OrdersService extends BaseApiService {
   }
 
   // Create batch order from TempTav items and clear TempTav
+  // CRITICAL: This method now validates responses properly to prevent print-without-save issues
   static Future<Map<String, dynamic>> createBatchOrder(String tableId) async {
-    print('🚀 createBatchOrder called for tableId: $tableId');
-    
+    print('createBatchOrder called for tableId: $tableId');
+
     if (!BaseApiService.isConfigured) {
-      print('❌ API not configured');
+      print('API not configured');
       throw ApiException(statusCode: 0, message: 'API not configured');
     }
-    
+
     try {
       // First, get the current TempTav items to create the batch order
-      print('📦 Fetching TempTav items...');
+      print('Fetching TempTav items...');
       final tempOrders = await getTempOrders(tableId);
-      print('📦 Found ${tempOrders.length} temp orders');
-      
+      print('Found ${tempOrders.length} temp orders');
+
       if (tempOrders.isEmpty) {
-        print('❌ No items to order');
+        print('No items to order');
         throw ApiException(statusCode: 0, message: 'No items to order');
       }
-      
+
       // Convert TempTav items to the batch order format
       final products = tempOrders.map((tempOrder) => {
         'productId': tempOrder['productId'] ?? 0,
         'quantity': (tempOrder['sasia'] ?? tempOrder['quantity'] ?? 1.0).toInt(),
         'notes': tempOrder['opsionet'] ?? tempOrder['options'] ?? '',
       }).toList();
-      
-      print('🔄 Converted to batch format: ${products.length} products');
-      print('📤 Products: $products');
-      
+
+      print('Converted to batch format: ${products.length} products');
+
       final requestBody = {
         'tableId': tableId,
         'products': products,
       };
-      print('📤 Request body: $requestBody');
-      
+
       // Create batch order
-      print('🌐 Sending POST to /api/Orders/batch...');
+      print('Sending POST to /api/Orders/batch...');
       final batchResponse = await http.post(
         Uri.parse('${BaseApiService.baseUrl}/api/Orders/batch'),
         headers: BaseApiService.headers,
         body: json.encode(requestBody),
       );
-      
-      print('📨 Batch response status: ${batchResponse.statusCode}');
-      print('📨 Batch response body: ${batchResponse.body}');
-      
+
+      print('Batch response status: ${batchResponse.statusCode}');
+      print('Batch response body: ${batchResponse.body}');
+
       final batchData = BaseApiService.handleResponse(batchResponse);
-      print('✅ Batch order response: $batchData');
-      
-      // If batch order was successful, clear the TempTav
-      if (batchData['success'] == true || batchResponse.statusCode < 300) {
-        print('🧹 Clearing TempTav orders...');
-        final clearSuccess = await clearTempOrders(tableId);
-        if (!clearSuccess) {
-          print('⚠️ Warning: Batch order created but failed to clear TempTav');
-        } else {
-          print('✅ TempTav cleared successfully');
+      print('Batch order response: $batchData');
+
+      // CRITICAL: Validate the response properly
+      final success = batchData['success'] == true;
+      final message = batchData['message']?.toString() ?? '';
+      final error = batchData['error']?.toString();
+
+      // Check for explicit failure
+      if (!success && error != null && error.isNotEmpty) {
+        print('CRITICAL: Batch order failed with error: $error');
+        throw ApiException(statusCode: 0, message: error);
+      }
+
+      // Check for save failure indicators in the message
+      if (message.toLowerCase().contains('save failed') ||
+          message.toLowerCase().contains('all orders failed') ||
+          message.toLowerCase().contains('critical')) {
+        print('CRITICAL: Batch order response indicates save failure: $message');
+        throw ApiException(statusCode: 0, message: 'Order save failed: $message');
+      }
+
+      // Only clear TempTav if we're confident the order was saved
+      if (success || batchResponse.statusCode < 300) {
+        // Additional check: ensure we got some data back indicating orders were created
+        final data = batchData['data'];
+        if (data is List && data.isEmpty && products.isNotEmpty) {
+          print('WARNING: API returned empty data but we sent ${products.length} products');
+          // Don't throw, but include warning in response
+          batchData['warning'] = 'Server returned empty data - verify order was saved';
+        }
+
+        print('Clearing TempTav orders...');
+        try {
+          final clearSuccess = await clearTempOrders(tableId);
+          if (!clearSuccess) {
+            print('Warning: Batch order created but failed to clear TempTav');
+            batchData['tempTavClearFailed'] = true;
+          } else {
+            print('TempTav cleared successfully');
+          }
+        } catch (clearError) {
+          print('Error clearing TempTav: $clearError');
+          batchData['tempTavClearFailed'] = true;
+          // Don't throw - order was saved, this is just cleanup
         }
       } else {
-        print('❌ Batch order failed, not clearing TempTav');
+        print('Batch order not confirmed successful, not clearing TempTav');
+        throw ApiException(
+          statusCode: batchResponse.statusCode,
+          message: 'Order creation not confirmed. Status: ${batchResponse.statusCode}',
+        );
       }
-      
+
       return batchData;
     } catch (e) {
-      print('❌ createBatchOrder error: $e');
+      print('createBatchOrder error: $e');
+      if (e is ApiException) {
+        rethrow;
+      }
       throw ApiException(statusCode: 0, message: 'Failed to create batch order: $e');
     }
   }

@@ -6,6 +6,7 @@ import '../providers/providers.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
 import '../widgets/widgets.dart';
+import '../utils/translations.dart';
 
 class HallsTablesScreen extends ConsumerStatefulWidget {
   const HallsTablesScreen({super.key});
@@ -36,7 +37,7 @@ class _HallsTablesScreenState extends ConsumerState<HallsTablesScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Data refreshed from API'),
+              content: Text(AppTranslations.dataRefreshedFromApi),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -46,7 +47,7 @@ class _HallsTablesScreenState extends ConsumerState<HallsTablesScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('API not configured. Go to Settings to configure.'),
+              content: Text(AppTranslations.apiNotConfiguredGoToSettings),
               backgroundColor: Colors.orange,
               duration: Duration(seconds: 3),
             ),
@@ -57,7 +58,7 @@ class _HallsTablesScreenState extends ConsumerState<HallsTablesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to refresh data: ${e.toString()}'),
+            content: Text('${AppTranslations.failedToRefreshData}: ${e.toString()}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -108,7 +109,7 @@ class _HallsTablesScreenState extends ConsumerState<HallsTablesScreen> {
                 )
               : const Icon(Icons.refresh, size: 28), // Increased icon size
             onPressed: _isRefreshing ? null : _refreshData,
-            tooltip: 'Refresh data from API',
+            tooltip: AppTranslations.refreshDataFromApi,
             iconSize: 28, // Added icon size
           ),
           IconButton(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../services/port_discovery_service.dart';
 import '../services/data_persistence_service.dart';
@@ -23,6 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   List<PortInfo> _discoveredPorts = [];
   String? _selectedHost;
   Map<String, int> _cacheInfo = {};
+  bool _printStaffEnabled = false;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _serverFocusNode = FocusNode();
     _loadCurrentSettings();
     _loadCacheInfo();
+    _loadPrintStaffSetting();
     
     // Automatically focus the server URL field on mobile to show keyboard
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -56,6 +59,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final info = await dataPersistence.getCacheInfo();
     setState(() {
       _cacheInfo = info;
+    });
+  }
+
+  Future<void> _loadPrintStaffSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _printStaffEnabled = prefs.getBool('print_staff') ?? false;
+    });
+  }
+
+  Future<void> _savePrintStaffSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('print_staff', value);
+    setState(() {
+      _printStaffEnabled = value;
     });
   }
 
@@ -647,7 +665,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 
                 const SizedBox(height: 24),
-                
+
+                // Print Staff Setting
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppTranslations.printStaff,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF000000),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppTranslations.printStaffDescription,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF666666),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: _printStaffEnabled,
+                        onChanged: _savePrintStaffSetting,
+                        activeColor: const Color(0xFF000000),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // Save Button
                 SizedBox(
                   width: double.infinity,

@@ -61,7 +61,7 @@ class ResPosApp extends ConsumerWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: const Color(0xFFFFFFFF),
           elevation: 2,
           shadowColor: Colors.black.withOpacity(0.1),

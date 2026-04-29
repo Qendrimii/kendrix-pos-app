@@ -31,6 +31,8 @@ class AppTranslations {
   static const String saveSettings = 'Ruaj Cilësimet';
   static const String settingsSaved = 'Cilësimet u ruajtën dhe të dhënat u ngarkuan nga API!';
   static const String errorSavingSettings = 'Gabim në ruajtjen e cilësimeve';
+  static const String printStaff = 'Print Staff';
+  static const String printStaffDescription = 'Aktivizo butonin Paguaj në dialogun e pagesës';
   
   // Port Discovery
   static const String portDiscovery = 'Zbulimi i Portave';

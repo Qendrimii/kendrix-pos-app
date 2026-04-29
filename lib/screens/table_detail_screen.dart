@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,11 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   List<MenuItem> _searchResults = [];
   bool _isSearching = false;
   List<String> _apiCategories = [];
+  bool _isAddingItem = false;
+  bool _isRemovingItem = false;
+  bool _isPrintingOrder = false;
+  bool _isGoingBack = false;
+  Timer? _searchDebounceTimer;
 
   @override
   void initState() {
@@ -55,6 +61,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
 
   @override
   void dispose() {
+    _searchDebounceTimer?.cancel();
     super.dispose();
   }
 
@@ -68,6 +75,8 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   }
 
   Future<void> _checkAndFreeTable() async {
+    if (_isGoingBack) return;
+    _isGoingBack = true;
     try {
       // Check if widget is still mounted before using ref
       if (!mounted) {
@@ -104,6 +113,8 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
       }
     } catch (e) {
       print('❌ Error checking and freeing table: $e');
+    } finally {
+      _isGoingBack = false;
     }
   }
 
@@ -114,7 +125,9 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     return name;
   }
 
-  Future<void> _searchProducts(String query) async {
+  void _searchProducts(String query) {
+    _searchDebounceTimer?.cancel();
+
     if (query.trim().isEmpty) {
       setState(() {
         _searchQuery = '';
@@ -131,32 +144,39 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
       selectedCategory = 'Search';
     });
 
-    try {
-      final apiService = ApiService();
-      if (apiService.isConfigured) {
-        final results = await apiService.searchProducts(query);
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
-      } else {
-        // Fallback to local search if API not configured
-        final allMenu = ref.read(menuProvider);
-        final results = allMenu.where((item) => 
-          item.name.toLowerCase().contains(query.toLowerCase())
-        ).toList();
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        final apiService = ApiService();
+        if (apiService.isConfigured) {
+          final results = await apiService.searchProducts(query);
+          if (mounted) {
+            setState(() {
+              _searchResults = results;
+              _isSearching = false;
+            });
+          }
+        } else {
+          final allMenu = ref.read(menuProvider);
+          final results = allMenu.where((item) =>
+            item.name.toLowerCase().contains(query.toLowerCase())
+          ).toList();
+          if (mounted) {
+            setState(() {
+              _searchResults = results;
+              _isSearching = false;
+            });
+          }
+        }
+      } catch (e) {
+        print('Search failed: $e');
+        if (mounted) {
+          setState(() {
+            _searchResults = [];
+            _isSearching = false;
+          });
+        }
       }
-    } catch (e) {
-      print('Search failed: $e');
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-    }
+    });
   }
 
   @override
@@ -313,7 +333,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
             if (canShowPayment && !isMobile)
               IconButton(
                 icon: const Icon(Icons.payment),
-                onPressed: () => _showPaymentDialog(context, ref, tableOrders.where((order) => !order.id.startsWith('temp_')).toList()),
+                onPressed: () => _showPaymentDialog(context, ref, tableOrders.where((order) => !order.id.startsWith('temp_')).toList(), tableName: table!.name),
               ),
           ],
         ),
@@ -339,7 +359,8 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
             activeOrder: activeOrder,
             tableOrders: tableOrders,
             onPrintOrder: () => activeOrder != null ? _printOrder(activeOrder) : null,
-            onShowPayment: canShowPayment ? () => _showPaymentDialog(context, ref, tableOrders.where((order) => !order.id.startsWith('temp_')).toList()) : null,
+            onShowPayment: canShowPayment ? () => _showPaymentDialog(context, ref, tableOrders.where((order) => !order.id.startsWith('temp_')).toList(), tableName: table!.name) : null,
+            isPrinting: _isPrintingOrder,
           ) : null,
       ),
     );
@@ -383,9 +404,9 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                 final item = filteredMenu[index];
                 return MenuItemCard(
                   item: item,
-                  onTap: () => _addItemToOrder(item),
-                  onLongPress: () => _showAddItemDialog(context, item),
-                  userColor: const Color(0xFF000000), // Uber Black
+                  onTap: (_isAddingItem || _isPrintingOrder) ? null : () => _addItemToOrder(item),
+                  onLongPress: (_isAddingItem || _isPrintingOrder) ? null : () => _showAddItemDialog(context, item),
+                  userColor: const Color(0xFF000000),
                 );
               },
             ),
@@ -451,9 +472,9 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                       final item = filteredMenu[index];
                       return MenuItemCard(
                         item: item,
-                        onTap: () => _addItemToOrder(item),
+                        onTap: _isAddingItem ? null : () => _addItemToOrder(item),
                         onLongPress: () => _showAddItemDialog(context, item),
-                        userColor: const Color(0xFF000000), // Uber Black
+                        userColor: const Color(0xFF000000),
                       );
                     },
                   ),
@@ -492,6 +513,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                       _printOrder(activeOrder);
                     }
                   },
+                  isPrinting: _isPrintingOrder,
                 ),
               ),
               // Previous Orders Section (40% of available space)
@@ -514,28 +536,34 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   }
 
   Future<void> _addItemToOrder(MenuItem item) async {
-    // Create order if none exists
-    final activeOrder = ref.read(ordersProvider).where((order) =>
-      order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
-    ).firstOrNull;
+    if (_isAddingItem) return;
+    setState(() => _isAddingItem = true);
+    try {
+      // Create order if none exists
+      final activeOrder = ref.read(ordersProvider).where((order) =>
+        order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
+      ).firstOrNull;
 
-    if (activeOrder == null) {
-      final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
-      if (!createResult.success) {
-        _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
-        return;
+      if (activeOrder == null) {
+        final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+        if (!createResult.success) {
+          _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
+          return;
+        }
       }
-    }
 
-    final comment = itemComments[item.id];
-    final result = await ref.read(ordersProvider.notifier).addItemToOrder(
-      widget.tableId,
-      item,
-      comment: comment,
-    );
+      final comment = itemComments[item.id];
+      final result = await ref.read(ordersProvider.notifier).addItemToOrder(
+        widget.tableId,
+        item,
+        comment: comment,
+      );
 
-    if (!result.success) {
-      _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToAddItem);
+      if (!result.success) {
+        _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToAddItem);
+      }
+    } finally {
+      if (mounted) setState(() => _isAddingItem = false);
     }
   }
 
@@ -569,151 +597,283 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   void _showAddItemDialog(BuildContext context, MenuItem item) {
     final commentController = TextEditingController();
     int quantity = 1;
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text('${AppTranslations.addItem} ${item.name}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '\$${item.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF000000),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: commentController,
-                decoration: InputDecoration(
-                  labelText: AppTranslations.commentOptional,
-                  border: const OutlineInputBorder(),
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final subtotal = item.price * quantity;
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Container(
+              width: MediaQuery.of(dialogContext).size.width * 0.9,
+              constraints: const BoxConstraints(maxWidth: 500),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: quantity > 1 ? () {
-                      setState(() => quantity--);
-                    } : null,
-                    icon: const Icon(Icons.remove),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                    ),
+                  // Header
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name,
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '\$${item.price.toStringAsFixed(2)} / cope',
+                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                        icon: const Icon(Icons.close, size: 24),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 24),
+
+                  // Quantity selector
+                  Text(
+                    AppTranslations.quantity,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _quantityButton(
+                        icon: Icons.remove,
+                        onPressed: (quantity > 1 && !isSubmitting) ? () {
+                          setDialogState(() => quantity--);
+                        } : null,
+                        backgroundColor: Colors.grey[200]!,
+                        foregroundColor: Colors.black,
+                      ),
+                      Container(
+                        width: 80,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!, width: 2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          quantity.toString(),
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      _quantityButton(
+                        icon: Icons.add,
+                        onPressed: isSubmitting ? null : () {
+                          setDialogState(() => quantity++);
+                        },
+                        backgroundColor: const Color(0xFF000000),
+                        foregroundColor: Colors.white,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Comment field
+                  Text(
+                    AppTranslations.note,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: commentController,
+                    decoration: InputDecoration(
+                      hintText: AppTranslations.commentOptional,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                    maxLines: 2,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Subtotal
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      quantity.toString(),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          AppTranslations.total,
+                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        ),
+                        Text(
+                          '\$${subtotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() => quantity++);
-                    },
-                    icon: const Icon(Icons.add),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFF000000),
-                      foregroundColor: Colors.white,
+                  const SizedBox(height: 20),
+
+                  // Add to Order button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: isSubmitting ? null : () async {
+                        setDialogState(() => isSubmitting = true);
+                        await _addItemToOrderWithDetails(item, quantity, commentController.text);
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF000000),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey[400],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text('${AppTranslations.addToOrder} ($quantity)'),
                     ),
                   ),
                 ],
               ),
-            ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _quantityButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 24),
+        style: IconButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          disabledBackgroundColor: Colors.grey[200],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppTranslations.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _addItemToOrderWithDetails(item, quantity, commentController.text);
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF000000),
-                foregroundColor: Colors.white,
-              ),
-              child: Text('${AppTranslations.addToOrder} $quantity'),
-            ),
-          ],
         ),
       ),
     );
   }
 
   Future<void> _addItemToOrderWithDetails(MenuItem item, int quantity, String comment) async {
-    // Create order if none exists
-    final activeOrder = ref.read(ordersProvider).where((order) =>
-      order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
-    ).firstOrNull;
+    if (_isAddingItem) return;
+    setState(() => _isAddingItem = true);
+    try {
+      // Create order if none exists
+      final activeOrder = ref.read(ordersProvider).where((order) =>
+        order.tableId == widget.tableId && order.status == OrderStatus.open && order.id.startsWith('temp_')
+      ).firstOrNull;
 
-    if (activeOrder == null) {
-      final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
-      if (!createResult.success) {
-        _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
-        return;
+      if (activeOrder == null) {
+        final createResult = await ref.read(ordersProvider.notifier).createOrder(widget.tableId);
+        if (!createResult.success) {
+          _showErrorSnackBar(createResult.errorMessage ?? AppTranslations.failedToCreateOrder);
+          return;
+        }
       }
-    }
 
-    // Add items with comment - track failures
-    int successCount = 0;
-    int failCount = 0;
+      // Add items with comment - track failures
+      int successCount = 0;
+      int failCount = 0;
 
-    for (int i = 0; i < quantity; i++) {
-      final result = await ref.read(ordersProvider.notifier).addItemToOrder(
-        widget.tableId,
-        item,
-        comment: comment.isNotEmpty ? comment : null,
-      );
+      for (int i = 0; i < quantity; i++) {
+        final result = await ref.read(ordersProvider.notifier).addItemToOrder(
+          widget.tableId,
+          item,
+          comment: comment.isNotEmpty ? comment : null,
+        );
 
-      if (result.success) {
-        successCount++;
-      } else {
-        failCount++;
+        if (result.success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
       }
-    }
 
-    if (failCount > 0) {
-      if (successCount > 0) {
-        _showErrorSnackBar('${AppTranslations.addedItemsPartialFail.replaceFirst('{0}', successCount.toString()).replaceFirst('{1}', failCount.toString())}');
-      } else {
-        _showErrorSnackBar(AppTranslations.failedToAddItems);
+      if (failCount > 0) {
+        if (successCount > 0) {
+          _showErrorSnackBar('${AppTranslations.addedItemsPartialFail.replaceFirst('{0}', successCount.toString()).replaceFirst('{1}', failCount.toString())}');
+        } else {
+          _showErrorSnackBar(AppTranslations.failedToAddItems);
+        }
       }
+    } finally {
+      if (mounted) setState(() => _isAddingItem = false);
     }
   }
 
   Future<void> _removeItem(int index) async {
-    final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, index);
-    if (!result.success) {
-      _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+    if (_isRemovingItem) return;
+    setState(() => _isRemovingItem = true);
+    try {
+      final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, index);
+      if (!result.success) {
+        _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+      }
+    } finally {
+      if (mounted) setState(() => _isRemovingItem = false);
     }
   }
 
   Future<void> _removeItemFromOrder(String orderId, OrderItem item) async {
-    // Find the order and the item index
-    final orders = ref.read(ordersProvider);
-    final order = orders.firstWhere((o) => o.id == orderId);
-    final itemIndex = order.items.indexOf(item);
-    if (itemIndex != -1) {
-      final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, itemIndex);
-      if (!result.success) {
-        _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+    if (_isRemovingItem) return;
+    setState(() => _isRemovingItem = true);
+    try {
+      final orders = ref.read(ordersProvider);
+      final order = orders.firstWhere((o) => o.id == orderId);
+      final itemIndex = order.items.indexOf(item);
+      if (itemIndex != -1) {
+        final result = await ref.read(ordersProvider.notifier).removeOrderItem(widget.tableId, itemIndex);
+        if (!result.success) {
+          _showErrorSnackBar(result.errorMessage ?? AppTranslations.failedToRemoveItem);
+        }
       }
+    } finally {
+      if (mounted) setState(() => _isRemovingItem = false);
     }
   }
 
@@ -726,6 +886,9 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
   }
 
   Future<void> _printOrder(Order order) async {
+    if (_isPrintingOrder) return;
+    setState(() => _isPrintingOrder = true);
+
     print('_printOrder called in UI for order: ${order.id} with ${order.items.length} items');
     print('Order details: ${order.items.map((item) => '${item.name} x${item.quantity}').join(', ')}');
 
@@ -784,6 +947,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
         }
       });
     } else {
+      if (mounted) setState(() => _isPrintingOrder = false);
       // CRITICAL: Show error to user - order was NOT sent successfully
       _showErrorDialog(
         AppTranslations.orderFailed,
@@ -945,12 +1109,13 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
     );
   }
 
-  void _showPaymentDialog(BuildContext context, WidgetRef ref, List<Order> orders) {
+  void _showPaymentDialog(BuildContext context, WidgetRef ref, List<Order> orders, {String tableName = ''}) {
     showDialog(
       context: context,
       builder: (dialogContext) => PaymentDialog(
         orders: orders,
         tableId: widget.tableId,
+        tableName: tableName,
         onPaymentComplete: () async {
           // Close the dialog first
           Navigator.of(dialogContext).pop();

@@ -163,6 +163,185 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _showHelpDialog() {
+    final isConfigured = ApiService().isConfigured;
+    final currentUrl = ApiService().baseUrl ?? '';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 24),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Informacion',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+
+              // Connection status
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isConfigured ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          isConfigured ? Icons.check_circle : Icons.warning_amber,
+                          size: 20,
+                          color: isConfigured ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isConfigured ? 'Serveri: I lidhur' : 'Serveri: I pa-konfiguruar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isConfigured ? const Color(0xFF2E7D32) : const Color(0xFFE65100),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isConfigured) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        currentUrl,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // PIN info
+              const Text(
+                'PIN per hyrje:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              if (isConfigured)
+                const Text(
+                  'Perdorni PIN-in qe ju ka dhene administratori.',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF444444)),
+                )
+              else ...[
+                const Text(
+                  'Pa server, mund te perdorni keto PIN:',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF444444)),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _pinChip('1111', 'Alice'),
+                    _pinChip('2222', 'Bob'),
+                    _pinChip('3333', 'Charlie'),
+                    _pinChip('4444', 'Diana'),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+
+              // Use test server button
+              const Divider(),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final apiService = ApiService();
+                    await apiService.setBaseUrl('https://rest.kendrix.org');
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop();
+                    }
+                    if (mounted) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Test server u konfigurua: rest.kendrix.org'),
+                          backgroundColor: Color(0xFF2E7D32),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.science, size: 18),
+                  label: const Text('Perdor Test Server'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1565C0),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              if (!isConfigured) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.settings, size: 16, color: Color(0xFF666666)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Ose shtypni butonin e cilësimeve (⚙) per server tjeter.',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _pinChip(String pin, String name) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE0E0E0)),
+      ),
+      child: Text(
+        '$pin ($name)',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'monospace',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,7 +376,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
+                // Connection status & help
+                GestureDetector(
+                  onTap: _showHelpDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: ApiService().isConfigured
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: ApiService().isConfigured
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFFF9800),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          ApiService().isConfigured ? Icons.cloud_done : Icons.cloud_off,
+                          size: 16,
+                          color: ApiService().isConfigured
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFE65100),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            ApiService().isConfigured
+                                ? 'Server i lidhur'
+                                : 'Pa server',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: ApiService().isConfigured
+                                  ? const Color(0xFF2E7D32)
+                                  : const Color(0xFFE65100),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.help_outline,
+                          size: 14,
+                          color: ApiService().isConfigured
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFE65100),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 PinDisplay(pin: _pin),
                 if (_isLoading) ...[

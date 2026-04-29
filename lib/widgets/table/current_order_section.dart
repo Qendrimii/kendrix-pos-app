@@ -10,6 +10,7 @@ class CurrentOrderSection extends StatelessWidget {
   final Function(int, String) onCommentUpdate;
   final Function(int, int) onQuantityUpdate;
   final VoidCallback onPrintOrder;
+  final bool isPrinting;
 
   const CurrentOrderSection({
     super.key,
@@ -19,6 +20,7 @@ class CurrentOrderSection extends StatelessWidget {
     required this.onCommentUpdate,
     required this.onQuantityUpdate,
     required this.onPrintOrder,
+    this.isPrinting = false,
   });
 
   @override
@@ -130,14 +132,23 @@ class CurrentOrderSection extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: onPrintOrder,
-                          icon: const Icon(Icons.print),
+                          onPressed: isPrinting ? null : onPrintOrder,
+                          icon: isPrinting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Icon(Icons.print),
                           label: Text(AppTranslations.order),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: currentUser.color,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20), // Reduced padding to prevent overflow
-                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600), // Increased font size
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),

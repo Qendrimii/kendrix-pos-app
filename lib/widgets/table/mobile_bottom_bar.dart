@@ -8,6 +8,7 @@ class MobileBottomBar extends StatelessWidget {
   final List<Order> tableOrders;
   final VoidCallback onPrintOrder;
   final VoidCallback? onShowPayment;
+  final bool isPrinting;
 
   const MobileBottomBar({
     super.key,
@@ -16,6 +17,7 @@ class MobileBottomBar extends StatelessWidget {
     required this.tableOrders,
     required this.onPrintOrder,
     this.onShowPayment,
+    this.isPrinting = false,
   });
 
   @override
@@ -51,17 +53,26 @@ class MobileBottomBar extends StatelessWidget {
           if (activeOrder?.items.isNotEmpty ?? false) ...[
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: activeOrder != null ? () {
+                onPressed: isPrinting ? null : (activeOrder != null ? () {
                   print('🔘 Order button clicked - activeOrder: ${activeOrder?.id}, items: ${activeOrder?.items.length}');
                   onPrintOrder();
-                } : null,
-                icon: const Icon(Icons.print, size: 20),
+                } : null),
+                icon: isPrinting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.print, size: 20),
                 label: Text(AppTranslations.order),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: currentUser.color, // Use user's color
+                  backgroundColor: currentUser.color,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24), // Increased padding for mobile
-                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600), // Increased font size
+                  padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+                  textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

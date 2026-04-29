@@ -3,14 +3,14 @@ import '../../models/models.dart';
 
 class MenuItemCard extends StatelessWidget {
   final MenuItem item;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final Color userColor;
 
   const MenuItemCard({
     super.key,
     required this.item,
-    required this.onTap,
+    this.onTap,
     this.onLongPress,
     required this.userColor,
   });

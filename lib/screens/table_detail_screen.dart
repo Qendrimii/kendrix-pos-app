@@ -695,12 +695,19 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: commentController,
+                    maxLength: 50,
+                    onChanged: (_) => setDialogState(() {}),
                     decoration: InputDecoration(
                       hintText: AppTranslations.commentOptional,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      counterText: '${50 - commentController.text.length} karaktere te mbetura',
+                      counterStyle: TextStyle(
+                        fontSize: 12,
+                        color: commentController.text.length > 45 ? Colors.red : Colors.grey[600],
+                      ),
                     ),
                     maxLines: 2,
                     style: const TextStyle(fontSize: 16),

@@ -116,9 +116,16 @@ class _OrderItemTileState extends State<OrderItemTile> {
             children: [
               TextField(
                 controller: commentController,
+                maxLength: 50,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: AppTranslations.commentOptional,
                   border: const OutlineInputBorder(),
+                  counterText: '${50 - commentController.text.length} karaktere te mbetura',
+                  counterStyle: TextStyle(
+                    fontSize: 12,
+                    color: commentController.text.length > 45 ? Colors.red : Colors.grey[600],
+                  ),
                 ),
                 maxLines: 2,
               ),

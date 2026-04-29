@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
@@ -368,11 +367,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: SvgPicture.asset(
-                      'assets/icons/logo.svg',
-                      fit: BoxFit.contain,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/icons/app-icon.png',
+                      fit: BoxFit.cover,
+                      width: 120,
+                      height: 120,
                     ),
                   ),
                 ),

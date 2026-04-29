@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'models/models.dart';
 import 'providers/providers.dart';
+import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/halls_tables_screen.dart';
 import 'screens/table_detail_screen.dart';
@@ -20,11 +21,11 @@ void main() async {
   // Initialize data persistence service
   await DataPersistenceService().getCacheInfo(); // This will initialize the service
   
-  runApp(const ProviderScope(child: ResPosApp()));
+  runApp(const ProviderScope(child: KendrixPosApp()));
 }
 
-class ResPosApp extends ConsumerWidget {
-  const ResPosApp({super.key});
+class KendrixPosApp extends ConsumerWidget {
+  const KendrixPosApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -96,11 +97,15 @@ class ResPosApp extends ConsumerWidget {
         ),
       ),
       routerConfig: GoRouter(
-        initialLocation: currentUser == null ? '/login' : '/halls',
+        initialLocation: '/splash',
         redirect: (context, state) {
           final isLoggedIn = currentUser != null;
+          final isOnSplash = state.uri.path == '/splash';
           final isOnLoginPage = state.uri.path == '/login';
-          
+
+          // Allow splash screen to show without redirect
+          if (isOnSplash) return null;
+
           if (!isLoggedIn && !isOnLoginPage) {
             return '/login';
           }
@@ -110,6 +115,11 @@ class ResPosApp extends ConsumerWidget {
           return null;
         },
         routes: [
+          GoRoute(
+            path: '/splash',
+            name: 'splash',
+            builder: (context, state) => const SplashScreen(),
+          ),
           GoRoute(
             path: '/login',
             name: 'login',

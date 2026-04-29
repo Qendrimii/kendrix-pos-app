@@ -1,6 +1,6 @@
 class AppTranslations {
   // App Title
-  static const String appTitle = 'Restaurant POS';
+  static const String appTitle = 'Kendrix POS';
   
   // Login Screen
   static const String invalidPin = 'PIN i pavlefshëm';

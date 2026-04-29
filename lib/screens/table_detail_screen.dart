@@ -611,9 +611,10 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
               width: MediaQuery.of(dialogContext).size.width * 0.9,
               constraints: const BoxConstraints(maxWidth: 500),
               padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
                   Row(
@@ -767,6 +768,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           );

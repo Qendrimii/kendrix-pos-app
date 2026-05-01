@@ -611,9 +611,10 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
               width: MediaQuery.of(dialogContext).size.width * 0.9,
               constraints: const BoxConstraints(maxWidth: 500),
               padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
                   Row(
@@ -694,12 +695,19 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: commentController,
+                    maxLength: 50,
+                    onChanged: (_) => setDialogState(() {}),
                     decoration: InputDecoration(
                       hintText: AppTranslations.commentOptional,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      counterText: '${50 - commentController.text.length} karaktere te mbetura',
+                      counterStyle: TextStyle(
+                        fontSize: 12,
+                        color: commentController.text.length > 45 ? Colors.red : Colors.grey[600],
+                      ),
                     ),
                     maxLines: 2,
                     style: const TextStyle(fontSize: 16),
@@ -767,6 +775,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           );

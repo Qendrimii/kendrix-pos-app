@@ -31,6 +31,9 @@ abstract class BaseApiService {
   static Future<void> loadConfiguration() async {
     final prefs = await SharedPreferences.getInstance();
     _baseUrl = prefs.getString('api_base_url');
+    if (_baseUrl == null || _baseUrl!.isEmpty) {
+      _baseUrl = 'https://rest.kendrix.org';
+    }
   }
 
   static Map<String, dynamic> handleResponse(http.Response response) {

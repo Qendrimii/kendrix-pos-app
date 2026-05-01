@@ -96,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             
             // Navigate to halls screen
             if (mounted) {
-              context.go('/halls-tables');
+              context.go('/halls');
             }
           } else {
             setState(() {
@@ -136,7 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       
       // Navigate to halls screen
       if (mounted) {
-        context.go('/halls-tables');
+        context.go('/halls');
       }
     } else {
       setState(() {
@@ -347,11 +347,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: const Color(0xFFF6F6F6), // Uber light grey
       body: SafeArea(
         child: Center(
-          child: Container(
-            width: MediaQuery.of(context).size.width > 600 ? 400 : double.infinity,
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          child: SingleChildScrollView(
+            child: Container(
+              width: MediaQuery.of(context).size.width > 600 ? 400 : double.infinity,
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   width: 120,
@@ -488,6 +489,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

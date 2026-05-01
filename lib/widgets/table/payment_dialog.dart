@@ -93,7 +93,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
             ),
             const Divider(height: 24, thickness: 1),
 
-            // Scrollable content
+            // Scrollable content (table info, payment methods)
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -116,34 +116,6 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    // Total
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF000000),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            AppTranslations.total,
-                            style: const TextStyle(fontSize: 16, color: Colors.white70),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '\$${total.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 28),
 
                     // Payment Method
                     Text(
@@ -178,83 +150,110 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                         );
                       }).toList(),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Cash input (only for cash payment id == 1)
-                    if (selectedPaymentMethodId == 1) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _cashController,
-                              decoration: InputDecoration(
-                                labelText: AppTranslations.cashReceived,
-                                prefixText: '\$',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              ),
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(fontSize: 18),
-                              onChanged: (value) {
-                                setState(() {
-                                  cashReceived = double.tryParse(value) ?? 0.0;
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                cashReceived = total;
-                                _cashController.text = total.toStringAsFixed(2);
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-                              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child: Text(AppTranslations.fullPayment),
-                          ),
-                        ],
-                      ),
-                      if (change >= 0 && cashReceived > 0) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFF4CAF50)),
-                          ),
-                          child: Text(
-                            '${AppTranslations.change}: \$${change.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2E7D32),
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                    ],
                   ],
                 ),
               ),
             ),
 
-            // Bottom action buttons (always visible)
-            const Divider(height: 24, thickness: 1),
+            // Total + Cash input + Change — always visible above buttons
+            const Divider(height: 16, thickness: 1),
+
+            // Total
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF000000),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppTranslations.total,
+                    style: const TextStyle(fontSize: 18, color: Colors.white70),
+                  ),
+                  Text(
+                    '\$${total.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Cash input (only for cash payment id == 1)
+            if (selectedPaymentMethodId == 1) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _cashController,
+                      decoration: InputDecoration(
+                        labelText: AppTranslations.cashReceived,
+                        prefixText: '\$',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 18),
+                      onChanged: (value) {
+                        setState(() {
+                          cashReceived = double.tryParse(value) ?? 0.0;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        cashReceived = total;
+                        _cashController.text = total.toStringAsFixed(2);
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(AppTranslations.fullPayment),
+                  ),
+                ],
+              ),
+              if (change >= 0 && cashReceived > 0) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF4CAF50)),
+                  ),
+                  child: Text(
+                    '${AppTranslations.change}: \$${change.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E7D32),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ],
+            const SizedBox(height: 12),
             Text(
               AppTranslations.completePayment,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

@@ -17,13 +17,6 @@ class MenuItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      String _trimProductName(String name) {
-    if (name.length > 15) {
-      return '${name.substring(0, 15)}...';
-    }
-    return name;
-  }
-
     return Card(
       elevation: 2,
       child: InkWell(
@@ -31,32 +24,32 @@ class MenuItemCard extends StatelessWidget {
         onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(3.0), // Reduced from 8.0 to 3.0 to save space
+          padding: const EdgeInsets.all(4.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min, // Prevent overflow
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                _trimProductName(item.name),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600, // Increased from w500 to w600
-                  fontSize: 14, // Reduced to fit better and prevent overflow
-                  color: Color(0xFF000000), // Black text
+              Expanded(
+                child: Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Color(0xFF000000),
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 2), // Reduced from 4 to 2 to save space
-              Text(
-                '\$${item.price.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 14, // Restored to original 14
-                  fontWeight: FontWeight.bold,
-                  color: userColor,
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Text(
+                  item.price.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: userColor,
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),

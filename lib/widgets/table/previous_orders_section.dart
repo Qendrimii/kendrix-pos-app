@@ -38,7 +38,7 @@ class PreviousOrdersSection extends StatelessWidget {
               const Spacer(),
               if (previousOrders.isNotEmpty)
                 Text(
-                  '\$${previousOrders.fold<double>(0, (sum, order) => sum + order.total).toStringAsFixed(2)}',
+                  '${previousOrders.fold<double>(0, (sum, order) => sum + order.total).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 20, // Increased from 16 to 20
                     fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class PreviousOrdersSection extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '\$${previousOrders.fold<double>(0, (sum, order) => sum + order.total).toStringAsFixed(2)}',
+                                '${previousOrders.fold<double>(0, (sum, order) => sum + order.total).toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 18,

@@ -91,7 +91,7 @@ class TableTile extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(3), // Reduced from 4 to 3 to save space
                   ),
                   child: Text(
-                    '\$${table.total.toStringAsFixed(2)}',
+                    '${table.total.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 9,
                       color: borderColor,

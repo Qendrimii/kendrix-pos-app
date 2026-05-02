@@ -45,7 +45,7 @@ class CurrentOrderSection extends StatelessWidget {
               const Spacer(),
               if (activeOrder?.items.isNotEmpty ?? false)
                 Text(
-                  '\$${activeOrder!.total.toStringAsFixed(2)}',
+                  '${activeOrder!.total.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 20, // Increased from 16 to 20
                     fontWeight: FontWeight.bold,

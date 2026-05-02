@@ -53,7 +53,7 @@ class MobileOrderSummary extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '\$${activeOrder.total.toStringAsFixed(2)}',
+                '${activeOrder.total.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 22, // Increased from 18 to 22
                   fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class MobileOrderSummary extends StatelessWidget {
                       ),
                       const SizedBox(height: 3), // Reduced from 4 to 3 to save space
                       Text(
-                        '\$${(item.price * item.quantity).toStringAsFixed(2)}',
+                        '${(item.price * item.quantity).toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 16, // Increased from 13 to 16
                           color: Color(0xFF000000),

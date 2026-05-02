@@ -396,8 +396,8 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
                 childAspectRatio: 2.0,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4,
               ),
               itemCount: filteredMenu.length,
               itemBuilder: (context, index) {
@@ -462,10 +462,10 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: GridView.builder(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5, // Increased from 4 to 5 columns for smaller cards
-                      childAspectRatio: 0.8, // Reduced from 1.0 to 0.8 for taller cards to prevent overflow
-                      crossAxisSpacing: 6, // Reduced spacing
-                      mainAxisSpacing: 6, // Reduced spacing
+                      crossAxisCount: 5,
+                      childAspectRatio: 0.8,
+                      crossAxisSpacing: 3,
+                      mainAxisSpacing: 3,
                     ),
                     itemCount: filteredMenu.length,
                     itemBuilder: (context, index) {
@@ -630,7 +630,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '\$${item.price.toStringAsFixed(2)} / cope',
+                              '${item.price.toStringAsFixed(2)} / cope',
                               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                             ),
                           ],
@@ -730,7 +730,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                         ),
                         Text(
-                          '\$${subtotal.toStringAsFixed(2)}',
+                          '${subtotal.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -1040,7 +1040,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
           children: [
             Text(AppTranslations.previousOrdersItems),
             Text(
-              '${productList.length} ${AppTranslations.differentProducts} • \$${totalAmount.toStringAsFixed(2)} ${AppTranslations.total}',
+              '${productList.length} ${AppTranslations.differentProducts} • ${totalAmount.toStringAsFixed(2)} ${AppTranslations.total}',
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey[600],
@@ -1084,7 +1084,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('${AppTranslations.quantity}: ${product['quantity']} × \$${product['price'].toStringAsFixed(2)}'),
+                            Text('${AppTranslations.quantity}: ${product['quantity']} × ${product['price'].toStringAsFixed(2)}'),
                             if (product['comment'] != null && product['comment'].toString().isNotEmpty)
                                                               Text(
                                   '${AppTranslations.note}: ${product['comment']}',
@@ -1097,7 +1097,7 @@ class _TableDetailScreenState extends ConsumerState<TableDetailScreen> {
                           ],
                         ),
                         trailing: Text(
-                          '\$${product['total'].toStringAsFixed(2)}',
+                          '${product['total'].toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,

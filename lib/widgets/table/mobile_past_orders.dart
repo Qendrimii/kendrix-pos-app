@@ -78,7 +78,7 @@ class MobilePastOrders extends StatelessWidget {
               const Spacer(),
               if (pastOrders.isNotEmpty)
                 Text(
-                  '\$${pastOrdersTotal.toStringAsFixed(2)}',
+                  '${pastOrdersTotal.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 20, // Increased from 16 to 20
                     fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class MobilePastOrders extends StatelessWidget {
                           ),
                           const SizedBox(height: 2), // Increased from 1 to 2
                           Text(
-                            '\$${(product['total'] as double).toStringAsFixed(2)}',
+                            '${(product['total'] as double).toStringAsFixed(2)}',
                             style: const TextStyle(
                               fontSize: 10, // Increased from 7 to 10
                               color: Colors.black54,

@@ -174,7 +174,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                     style: const TextStyle(fontSize: 18, color: Colors.white70),
                   ),
                   Text(
-                    '\$${total.toStringAsFixed(2)}',
+                    '${total.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -242,7 +242,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
                     border: Border.all(color: const Color(0xFF4CAF50)),
                   ),
                   child: Text(
-                    '${AppTranslations.change}: \$${change.toStringAsFixed(2)}',
+                    '${AppTranslations.change}: ${change.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -399,7 +399,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppTranslations.paymentCompletedWithChange} \$${(cashReceived - total).toStringAsFixed(2)}'),
+            content: Text('${AppTranslations.paymentCompletedWithChange} ${(cashReceived - total).toStringAsFixed(2)}'),
             backgroundColor: const Color(0xFF006400),
             duration: const Duration(seconds: 2),
           ),
@@ -437,7 +437,7 @@ class _PaymentDialogState extends ConsumerState<PaymentDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppTranslations.kitchenPaymentCompleted} \$${(cashReceived - total).toStringAsFixed(2)}'),
+            content: Text('${AppTranslations.kitchenPaymentCompleted} ${(cashReceived - total).toStringAsFixed(2)}'),
             backgroundColor: const Color(0xFF000000),
             duration: const Duration(seconds: 2),
           ),

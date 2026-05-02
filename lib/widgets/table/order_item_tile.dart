@@ -63,7 +63,7 @@ class _OrderItemTileState extends State<OrderItemTile> {
                   ],
                   const SizedBox(height: 6), // Increased from 4 to 6
                   Text(
-                    '\$${widget.item.price.toStringAsFixed(2)} × ${widget.item.quantity}',
+                    '${widget.item.price.toStringAsFixed(2)} × ${widget.item.quantity}',
                     style: TextStyle(
                       fontSize: 14, // Increased from 12 to 14
                       color: widget.userColor,
@@ -77,7 +77,7 @@ class _OrderItemTileState extends State<OrderItemTile> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '\$${(widget.item.price * widget.item.quantity).toStringAsFixed(2)}',
+                  '${(widget.item.price * widget.item.quantity).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16, // Increased from 14 to 16
